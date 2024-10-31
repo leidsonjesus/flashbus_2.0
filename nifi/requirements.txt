@@ -1,0 +1,7 @@
+pyspark 
+boto3
+spark
+pyarrow
+requests
+hmac 
+pandas  
