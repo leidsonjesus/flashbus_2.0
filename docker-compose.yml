@@ -1,4 +1,4 @@
-#version: '3.8'
+version: '3.8'
 ############################
 ##  DEFAULT
 ############################
@@ -55,6 +55,27 @@ services:
 ############################
 ## INGESTAO
 ############################
+#  nifi:
+#    build:
+#      context: .                # Diretório atual como contexto de build
+#      dockerfile: nifi/Dockerfile  # Caminho para o Dockerfile
+#    container_name: nifi
+#    hostname: nifi
+#    volumes:
+#      - ./nifi/util:/util
+#    environment:
+#      NIFI_WEB_HTTP_PORT: "9090"
+#     NIFI_WEB_HTTPS_HOST: "nifi"
+#      TZ: "America/Sao_Paulo"
+#    command: >
+#      sh -c "ln -snf /usr/share/zoneinfo/$$TZ /etc/localtime && echo $$TZ > /etc/timezone"
+#    ports:
+#      - 49090:9090
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 2g
+
   nifi:
     build:
       context: .                # Diretório atual como contexto de build
@@ -63,6 +84,13 @@ services:
     hostname: nifi
     volumes:
       - ./nifi/util:/util
+      # - ./nifi/database_repository:/opt/nifi/nifi-current/database_repository
+      # - ./nifi/flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
+      # - ./nifi/content_repository:/opt/nifi/nifi-current/content_repository
+      # - ./nifi/provenance_repository:/opt/nifi/nifi-current/provenance_repository
+      # - ./nifi/state:/opt/nifi/nifi-current/state
+      # - ./nifi/conf:/opt/nifi/nifi-current/conf
+      # - ./nifi/log:/opt/nifi/nifi-current/logs
     environment:
       NIFI_WEB_HTTP_PORT: "9090"
       NIFI_WEB_HTTPS_HOST: "nifi"
@@ -75,7 +103,8 @@ services:
       resources:
         limits:
           memory: 2g
-          
+          # cpus: '0.2'
+
   airflow-webserver:
     <<: *airflow-common
     container_name: airflow-webserver
@@ -89,13 +118,13 @@ services:
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 5
       start_period: 30s  # Aumentar se necessário
     depends_on:
       - db
       - airflow-scheduler
-      # - airflow-worker  # Comentar se não necessário
+      - airflow-worker  # Comentar se não necessário
     command: >
       bash -c "airflow db init && \
       airflow users create --username admin --firstname Firstname --lastname Lastname --role Admin --email admin@example.com --password admin || true && \
@@ -128,7 +157,7 @@ services:
         - "CMD-SHELL"
         - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 5
       start_period: 30s
     environment:
@@ -147,7 +176,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 5
       start_period: 30s
     depends_on:
@@ -180,7 +209,7 @@ services:
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
       interval: 30s
-      timeout: 10s
+      timeout: 30s
       retries: 5
       start_period: 30s
 

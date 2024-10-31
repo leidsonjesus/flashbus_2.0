@@ -22,20 +22,22 @@ s3_client = boto3.client(
     aws_secret_access_key=SECRET_KEY,
 )
 
+print(f"credecial para acessar bucket minio {s3_client}")
+
 def list_objects(bucket_name):
     """Lista objetos no bucket e retorna uma lista."""
-    print(f"Listing objects in bucket: {bucket_name}")
+    print(f"Listing objects in bucket leidson 1:  ' {bucket_name}")
     try:
         response = s3_client.list_objects_v2(Bucket=bucket_name)
-        print(f"Objects found: {response.get('Contents', [])}")
+        print(f"Objects found 0 : {response.get('Contents', [])}")
         return [obj['Key'] for obj in response.get('Contents', [])]
     except ClientError as e:
         logging.error(f"Error listing objects in {bucket_name}: {e}")
         return []
-
+ 
 def download_json_from_minio(object_key):
     """Baixa o objeto JSON do MinIO."""
-    print(f"Downloading object: {object_key} from bucket {BUCKET_RAW}")
+    print(f"Downloading object 2: {object_key} from bucket {BUCKET_RAW}")
     try:
         s3_client.download_file(BUCKET_RAW, object_key, object_key)
         logging.info(f"Downloaded {object_key} from MinIO.")
@@ -46,7 +48,7 @@ def download_json_from_minio(object_key):
 
 def convert_json_to_parquet(json_file):
     """Converte o arquivo JSON para Parquet."""
-    print(f"Converting JSON to Parquet: {json_file}")
+    print(f"Converting JSON to Parquet 2: {json_file}")
     try:
         df = pd.read_json(json_file)
         parquet_file = json_file.replace('.json', '.parquet')
@@ -59,7 +61,7 @@ def convert_json_to_parquet(json_file):
 
 def upload_parquet_to_minio(parquet_file):
     """Faz o upload do arquivo Parquet para o bucket Trusted."""
-    print(f"Uploading Parquet file to bucket {BUCKET_TRUSTED}: {parquet_file}")
+    print(f"Uploading Parquet file to bucket 3 {BUCKET_TRUSTED}: {parquet_file}")
     try:
         s3_client.upload_file(parquet_file, BUCKET_TRUSTED, os.path.basename(parquet_file))
         logging.info(f"Uploaded {parquet_file} to MinIO.")
@@ -69,13 +71,16 @@ def upload_parquet_to_minio(parquet_file):
         return False
 
 def process_data(**kwargs):
+    print("Starting data processing...3")
     """Processa os dados do MinIO, acionado pelo NiFi."""
     print("Starting data processing...")
     objects = list_objects(BUCKET_RAW)
+    print(f"response da chamada do minio  ' {objects}")
     for obj in objects:
         try:
-            print(f"Processing object: {obj}")
+            print(f"Processing object 1: {obj}")
             json_file = download_json_from_minio(obj)
+            print(f"Pdownload_json_from_mini {json_file}")
             parquet_file = convert_json_to_parquet(json_file)
             if upload_parquet_to_minio(parquet_file):
                 # Remove o arquivo local após o upload bem-sucedido
@@ -85,19 +90,21 @@ def process_data(**kwargs):
         except Exception as e:
             logging.error(f"Failed processing {obj}: {e}")
 
+print("Starting data processing...3 leidson")
 default_args = {
     'owner': 'airflow',
     'start_date': datetime.now() - timedelta(days=1),  # Início no dia anterior
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=5),    
 }
-
+print("Starting data processing... 1")
 dag = DAG(
     'minio_to_parquet_dag',
     default_args=default_args,
     schedule_interval=None,  # DAG acionada manualmente
 )
 
+print("Starting data processing... 2")
 process_task = PythonOperator(
     task_id='process_minio_data',
     python_callable=process_data,
