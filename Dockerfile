@@ -23,11 +23,15 @@ RUN airflow db init
 RUN pip install apache-airflow-providers-cncf-kubernetes
 RUN pip install apache-airflow-providers-celery
 RUN pip install redis  
+RUN pip install minio
+
 # Criar diretório e alterar permissões
 
 # Instalar dependências do Python
 RUN pip install --upgrade pip && \
     pip install boto3 botocore apache-airflow-providers-amazon
+
+ 
 
 # Criar o usuário admin
 #RUN airflow users create \
@@ -42,7 +46,7 @@ RUN pip install --upgrade pip && \
  #   && chmod -R 777 /opt/airflow
 
 # Criar a conexão com o MinIO
-RUN airflow connections delete 's3_minio'
+#RUN airflow connections delete 's3_minio'
 RUN airflow connections add \
     's3_minio' \
     --conn-type 'S3' \
